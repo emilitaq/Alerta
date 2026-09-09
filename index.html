@@ -283,8 +283,10 @@ function toTitleCase(str){
 }
 [titulo,tema,lugar,actor,medio].forEach(el=>{
   el.addEventListener('blur', ()=>{
-    if(el.value.trim()){
-      el.value = toTitleCase(el.value.trim());
+    const val = el.value.trim();
+    const esTodoMayusculas = val.length>0 && val === val.toUpperCase() && val !== val.toLowerCase();
+    if(esTodoMayusculas){
+      el.value = toTitleCase(val);
       render();
     }
   });
