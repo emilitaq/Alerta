@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generador de Alertas Informativas PAS</title>
+<style>
+  :root{
+    --navy:#0F2A43;
+    --navy-2:#163C5C;
+    --steel:#3E5C76;
+    --paper:#F5F7F9;
+    --line:#D8DEE4;
+    --ink:#17222C;
+    --muted:#5C6B78;
+    --green:#1E8E5A;
+    --red:#C8402E;
+    --amber:#B8860B;
+    --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Georgia','Iowan Old Style',serif;
+    background:var(--paper);
+    color:var(--ink);
+  }
+  .wrap{
+    max-width:920px;
+    margin:0 auto;
+    padding:36px 24px 64px;
+  }
+  header{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    border-bottom:2px solid var(--navy);
+    padding-bottom:14px;
+    margin-bottom:28px;
+  }
+  header h1{
+    font-size:22px;
+    letter-spacing:0.2px;
+    margin:0;
+    color:var(--navy);
+    font-weight:700;
+  }
+  header span{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--muted);
+  }
+  .grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:28px;
+  }
+  @media (max-width:760px){
+    .grid{grid-template-columns:1fr;}
+  }
+  .panel{
+    background:#fff;
+    border:1px solid var(--line);
+  }
+  .panel-head{
+    background:var(--navy);
+    color:#fff;
+    padding:10px 16px;
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:0.4px;
+  }
+  .panel-body{
+    padding:20px;
+  }
+  label{
+    display:block;
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--muted);
+    margin:0 0 6px;
+  }
+  .field{
+    margin-bottom:16px;
+  }
+  input[type=text], input[type=date], textarea, select{
+    width:100%;
+    font-family:'Georgia',serif;
+    font-size:14.5px;
+    padding:9px 10px;
+    border:1px solid var(--line);
+    background:#fcfcfc;
+    color:var(--ink);
+  }
+  input:focus, textarea:focus, select:focus{
+    outline:2px solid var(--steel);
+    outline-offset:0;
+    background:#fff;
+  }
+  textarea{
+    min-height:110px;
+    resize:vertical;
+    line-height:1.5;
+  }
+  .row2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+  }
+  .sent-row{
+    display:flex;
+    gap:8px;
+    margin-top:4px;
+  }
+  .sent-btn{
+    flex:1;
+    padding:8px 6px;
+    border:1px solid var(--line);
+    background:#fcfcfc;
+    font-family:var(--mono);
+    font-size:12px;
+    cursor:pointer;
+    text-align:center;
+  }
+  .sent-btn.on-pos{background:var(--green);color:#fff;border-color:var(--green);}
+  .sent-btn.on-neg{background:var(--red);color:#fff;border-color:var(--red);}
+  .sent-btn.on-neu{background:var(--amber);color:#fff;border-color:var(--amber);}
+
+  .mention-row{display:flex;gap:8px;margin-top:4px;}
+  .mention-btn{
+    flex:1;padding:8px 6px;border:1px solid var(--line);background:#fcfcfc;
+    font-family:var(--mono);font-size:12px;cursor:pointer;text-align:center;
+  }
+  .mention-btn.on{background:var(--navy-2);color:#fff;border-color:var(--navy-2);}
+
+  .preview{
+    white-space:pre-wrap;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+    font-size:14.5px;
+    line-height:1.6;
+    background:#ECFBEA;
+    border:1px solid #CDEFC7;
+    padding:18px;
+    min-height:220px;
+    color:#111;
+  }
+  .preview b{font-weight:700;}
+  .preview .placeholder{color:#9aa8a5;font-style:italic;}
+  .copybar{
+    display:flex;
+    gap:10px;
+    margin-top:14px;
+  }
+  button.copy{
+    flex:1;
+    padding:11px;
+    background:var(--navy);
+    color:#fff;
+    border:none;
+    font-family:var(--mono);
+    font-size:12.5px;
+    letter-spacing:0.4px;
+    cursor:pointer;
+  }
+  button.copy:hover{background:var(--navy-2);}
+  button.copy.done{background:var(--green);}
+  .hint{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--muted);
+    margin-top:10px;
+    line-height:1.6;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Generador de Alertas Informativas — PAS</h1>
+    <span id="clock"></span>
+  </header>
+
+  <div class="grid">
+    <!-- FORM -->
+    <div class="panel">
+      <div class="panel-head">01 · DATOS DE LA ALERTA</div>
+      <div class="panel-body">
+        <div class="field">
+          <label>Fecha</label>
+          <input type="date" id="fecha">
+        </div>
+        <div class="field">
+          <label>Título de la alerta</label>
+          <input type="text" id="titulo" placeholder="Aprueban la Segunda Modificación del EIA de la Unidad Minera Shahuindo">
+        </div>
+        <div class="field">
+          <label>Resumen</label>
+          <textarea id="resumen" placeholder="Descripción de lo informado, quién lo difundió, en qué medio y detalles relevantes."></textarea>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>Fuente</label>
+            <input type="text" id="fuente" placeholder="La Voz Popular">
+          </div>
+          <div class="field">
+            <label>Link</label>
+            <input type="text" id="link" placeholder="https://drive.google.com/...">
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>Mención</label>
+            <div class="mention-row">
+              <div class="mention-btn on" data-val="Sí">Sí</div>
+              <div class="mention-btn" data-val="No">No</div>
+            </div>
+          </div>
+          <div class="field">
+            <label>Sentimiento</label>
+            <div class="sent-row">
+              <div class="sent-btn on-pos" data-val="Positivo" data-emoji="🟢">Positivo</div>
+              <div class="sent-btn" data-val="Negativo" data-emoji="🔴">Negativo</div>
+              <div class="sent-btn" data-val="Neutral" data-emoji="🟡">Neutral</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PREVIEW -->
+    <div class="panel">
+      <div class="panel-head">02 · MENSAJE LISTO PARA WHATSAPP</div>
+      <div class="panel-body">
+        <div class="preview" id="preview"></div>
+        <div class="copybar">
+          <button class="copy" id="copyBtn">COPIAR MENSAJE</button>
+        </div>
+        <div class="hint">
+          El texto usa negritas de WhatsApp (*así*). Pégalo directo en el chat — no lo escribas primero en un editor que reformatee los asteriscos.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const fecha = $('fecha'), titulo = $('titulo'), resumen = $('resumen'),
+      fuente = $('fuente'), link = $('link'), preview = $('preview'), copyBtn = $('copyBtn');
+
+let mention = 'Sí';
+let sentiment = { val: 'Positivo', emoji: '🟢' };
+
+document.querySelectorAll('.mention-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.mention-btn').forEach(b=>b.classList.remove('on'));
+    btn.classList.add('on');
+    mention = btn.dataset.val;
+    render();
+  });
+});
+
+document.querySelectorAll('.sent-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.sent-btn').forEach(b=>b.classList.remove('on-pos','on-neg','on-neu'));
+    const cls = btn.dataset.val === 'Positivo' ? 'on-pos' : btn.dataset.val === 'Negativo' ? 'on-neg' : 'on-neu';
+    btn.classList.add(cls);
+    sentiment = { val: btn.dataset.val, emoji: btn.dataset.emoji };
+    render();
+  });
+});
+
+function fmtDate(d){
+  if(!d) return '__/__/____';
+  const [y,m,dd] = d.split('-');
+  return `${dd}/${m}/${y}`;
+}
+
+function buildMessage(){
+  const t = titulo.value.trim() || '[Título de la alerta]';
+  const r = resumen.value.trim() || '[Resumen de la noticia]';
+  const f = fuente.value.trim() || '[Fuente]';
+  const l = link.value.trim() || '[Link]';
+  return `🔔 *Alerta informativa PAS | ${fmtDate(fecha.value)}*\n\n${sentiment.emoji} *${t}*\n\n${r}\n\n*Fuente:* ${f}\n*Link:* ${l}\n*Mención:* ${mention}\n*Sentimiento:* ${sentiment.val} ${sentiment.emoji}`;
+}
+
+function render(){
+  preview.textContent = buildMessage();
+  copyBtn.classList.remove('done');
+  copyBtn.textContent = 'COPIAR MENSAJE';
+}
+
+[fecha,titulo,resumen,fuente,link].forEach(el=>el.addEventListener('input', render));
+
+copyBtn.addEventListener('click', async ()=>{
+  try{
+    await navigator.clipboard.writeText(buildMessage());
+    copyBtn.textContent = '✓ COPIADO';
+    copyBtn.classList.add('done');
+    setTimeout(()=>{ copyBtn.textContent='COPIAR MENSAJE'; copyBtn.classList.remove('done'); }, 1800);
+  }catch(e){
+    copyBtn.textContent = 'No se pudo copiar — selecciona el texto';
+  }
+});
+
+function setToday(){
+  const d = new Date();
+  fecha.value = d.toISOString().slice(0,10);
+  $('clock').textContent = d.toLocaleDateString('es-PE',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+}
+setToday();
+render();
+</script>
+</body>
+</html>
