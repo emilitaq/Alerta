@@ -67,6 +67,11 @@
   button.save:hover{background:var(--navy-2);}
   button.save.done{background:var(--green);}
   button.save.err{background:var(--red);}
+  button.clear{
+    flex:1;min-width:140px;padding:11px;color:#fff;border:none;font-family:var(--mono);
+    font-size:12.5px;letter-spacing:0.4px;cursor:pointer;background:#8A8F99;
+  }
+  button.clear:hover{background:#6E7480;}
   .hint{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:10px;line-height:1.6;}
   .regno{
     display:inline-block;font-family:var(--mono);font-size:11px;background:var(--navy);color:#fff;
@@ -102,7 +107,15 @@
           </div>
           <div class="field">
             <label>Tema</label>
-            <input type="text" id="tema" placeholder="Ambiental, Social, Seguridad...">
+            <input type="text" id="tema" placeholder="Tema...">
+            <div class="toggle-row" id="temaRow" style="display:none; margin-top:6px;">
+              <div class="toggle-btn on" data-val="Huayllay/Pasco">Huayllay/Pasco</div>
+              <div class="toggle-btn" data-val="Huarón">Huarón</div>
+              <div class="toggle-btn" data-val="Nacional">Nacional</div>
+              <div class="toggle-btn" data-val="Shahuindo">Shahuindo</div>
+              <div class="toggle-btn" data-val="Nacional/Electoral">Nacional/Electoral</div>
+              <div class="toggle-btn" data-val="Cajabamba/Cajamarca">Cajabamba/Cajamarca</div>
+            </div>
           </div>
         </div>
 
@@ -110,6 +123,12 @@
           <div class="field">
             <label>Lugar</label>
             <input type="text" id="lugar" placeholder="Cajabamba, Cajamarca">
+            <div class="toggle-row" id="lugarRow" style="display:none; margin-top:6px;">
+              <div class="toggle-btn on" data-val="Pasco">Pasco</div>
+              <div class="toggle-btn" data-val="Nacional">Nacional</div>
+              <div class="toggle-btn" data-val="Cajamarca">Cajamarca</div>
+              <div class="toggle-btn" data-val="Shahuindo">Shahuindo</div>
+            </div>
           </div>
           <div class="field">
             <label>Actor</label>
@@ -188,6 +207,7 @@
         <div class="copybar">
           <button class="copy" id="copyBtn">COPIAR MENSAJE</button>
           <button class="save" id="saveBtn">GUARDAR EN BASE DE DATOS</button>
+          <button class="clear" id="clearBtn">LIMPIAR CAMPOS</button>
         </div>
         <div class="hint">
           El texto usa negritas de WhatsApp (*así*). "Guardar en base de datos" envía el registro a tu Google Sheet (número de registro y mes se calculan solos allí).
@@ -206,7 +226,33 @@ const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxBaCHOG2TZ4-xdN8rg9
 const $ = id => document.getElementById(id);
 const fecha=$('fecha'), tema=$('tema'), lugar=$('lugar'), actor=$('actor'),
       titulo=$('titulo'), resumen=$('resumen'), medio=$('medio'), link=$('link'),
-      preview=$('preview'), copyBtn=$('copyBtn'), saveBtn=$('saveBtn');
+      preview=$('preview'), copyBtn=$('copyBtn'), saveBtn=$('saveBtn'), clearBtn=$('clearBtn');
+
+const temaRow = $('temaRow');
+const lugarRow = $('lugarRow');
+let temaSelected = 'Huayllay/Pasco';
+let lugarSelected = 'Pasco';
+
+function currentTema(){
+  return org === 'PAS' ? temaSelected : tema.value.trim();
+}
+function currentLugar(){
+  return org === 'PAS' ? lugarSelected : lugar.value.trim();
+}
+
+function applyOrgFieldMode(){
+  if(org === 'PAS'){
+    tema.style.display = 'none';
+    lugar.style.display = 'none';
+    temaRow.style.display = 'flex';
+    lugarRow.style.display = 'flex';
+  }else{
+    tema.style.display = 'block';
+    lugar.style.display = 'block';
+    temaRow.style.display = 'none';
+    lugarRow.style.display = 'none';
+  }
+}
 
 let org = 'PAS';
 let mention = 'Sí';
@@ -235,7 +281,9 @@ function wireToggle(containerId, onSet){
     });
   });
 }
-wireToggle('orgRow', btn => org = btn.dataset.val);
+wireToggle('orgRow', btn => { org = btn.dataset.val; applyOrgFieldMode(); });
+wireToggle('temaRow', btn => temaSelected = btn.dataset.val);
+wireToggle('lugarRow', btn => lugarSelected = btn.dataset.val);
 wireToggle('mentionRow', btn => mention = btn.dataset.val);
 wireToggle('tipoMedioRow', btn => {
   tipoMedioCat = btn.dataset.val;
@@ -284,6 +332,8 @@ function toTitleCase(str){
 [titulo,tema,lugar,actor,medio].forEach(el=>{
   el.addEventListener('blur', ()=>{
     const val = el.value.trim();
+    // Solo corrige si el texto está TODO en mayúsculas (ej. "GOBIERNO REGIONAL").
+    // Si ya tiene mezcla de mayúsculas/minúsculas, se respeta tal cual se escribió.
     const esTodoMayusculas = val.length>0 && val === val.toUpperCase() && val !== val.toLowerCase();
     if(esTodoMayusculas){
       el.value = toTitleCase(val);
@@ -303,6 +353,42 @@ copyBtn.addEventListener('click', async ()=>{
   }
 });
 
+function resetForm(){
+  fecha.value = new Date().toISOString().slice(0,10);
+  [tema,lugar,actor,titulo,resumen,medio,link].forEach(el=> el.value = '');
+
+  // Vuelve los toggles a sus valores por defecto
+  document.querySelectorAll('#orgRow .toggle-btn').forEach(b=>b.classList.remove('on'));
+  document.querySelector('#orgRow .toggle-btn[data-val="PAS"]').classList.add('on');
+  org = 'PAS';
+  applyOrgFieldMode();
+
+  document.querySelectorAll('#temaRow .toggle-btn').forEach(b=>b.classList.remove('on'));
+  document.querySelector('#temaRow .toggle-btn[data-val="Huayllay/Pasco"]').classList.add('on');
+  temaSelected = 'Huayllay/Pasco';
+
+  document.querySelectorAll('#lugarRow .toggle-btn').forEach(b=>b.classList.remove('on'));
+  document.querySelector('#lugarRow .toggle-btn[data-val="Pasco"]').classList.add('on');
+  lugarSelected = 'Pasco';
+
+  document.querySelectorAll('#mentionRow .toggle-btn').forEach(b=>b.classList.remove('on'));
+  document.querySelector('#mentionRow .toggle-btn[data-val="Sí"]').classList.add('on');
+  mention = 'Sí';
+
+  document.querySelectorAll('#tipoMedioRow .toggle-btn').forEach(b=>b.classList.remove('on'));
+  document.querySelector('#tipoMedioRow .toggle-btn[data-val="Radio"]').classList.add('on');
+  tipoMedioCat = 'Radio';
+  redSocialWrap.style.display = 'none';
+
+  document.querySelectorAll('#sentRow .toggle-btn').forEach(b=>b.classList.remove('on','pos','neg','neu'));
+  const posBtn = document.querySelector('#sentRow .toggle-btn[data-val="Positivo"]');
+  posBtn.classList.add('on','pos');
+  sentiment = { val:'Positivo', emoji:'🟢' };
+
+  render();
+  titulo.focus();
+}
+
 saveBtn.addEventListener('click', async ()=>{
   if(!WEBAPP_URL || WEBAPP_URL.indexOf('PEGA_AQUI') !== -1){
     saveBtn.textContent = 'Falta pegar la URL del Apps Script';
@@ -311,8 +397,8 @@ saveBtn.addEventListener('click', async ()=>{
   }
   const payload = {
     fecha: fecha.value,
-    tema: tema.value.trim(),
-    lugar: lugar.value.trim(),
+    tema: currentTema(),
+    lugar: currentLugar(),
     actor: actor.value.trim(),
     mencion: mention,
     sentimiento: sentiment.val,
@@ -333,12 +419,18 @@ saveBtn.addEventListener('click', async ()=>{
     });
     saveBtn.textContent = '✓ GUARDADO';
     saveBtn.classList.add('done');
-    setTimeout(()=>{ saveBtn.textContent='GUARDAR EN BASE DE DATOS'; saveBtn.classList.remove('done'); }, 2000);
+    setTimeout(()=>{
+      saveBtn.textContent='GUARDAR EN BASE DE DATOS';
+      saveBtn.classList.remove('done');
+      resetForm();
+    }, 1200);
   }catch(err){
     saveBtn.textContent = 'Error al guardar';
     saveBtn.classList.add('err');
   }
 });
+
+clearBtn.addEventListener('click', resetForm);
 
 function setToday(){
   const d = new Date();
@@ -346,6 +438,7 @@ function setToday(){
   $('clock').textContent = d.toLocaleDateString('es-PE',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 }
 setToday();
+applyOrgFieldMode();
 render();
 </script>
 </body>
