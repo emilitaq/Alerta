@@ -50,7 +50,12 @@
   .toggle-btn.on.pos{background:var(--green);border-color:var(--green);}
   .toggle-btn.on.neg{background:var(--red);border-color:var(--red);}
   .toggle-btn.on.neu{background:var(--amber);border-color:var(--amber);}
-
+#temaRow .toggle-btn, #lugarRow .toggle-btn{
+  flex:0 1 auto;
+  min-width:0;
+  font-size:10.5px;
+  padding:6px 9px;
+}
   .preview{
     white-space:pre-wrap;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
     font-size:14.5px;line-height:1.6;background:#ECFBEA;border:1px solid #CDEFC7;padding:18px;min-height:220px;color:#111;
